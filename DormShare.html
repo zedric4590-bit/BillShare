@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DormShare | Electricity Bill Allocator</title>
+<style>
+:root{--bg:#100d12;--panel:#1b151e;--panel2:#241b28;--maroon:#8d243f;--maroon2:#b83758;--text:#f7f0f3;--muted:#c1b3bc;--line:#44313d;--good:#9bd7b1;--bad:#ffb0b0}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top right,#351622 0,transparent 38%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{width:min(1100px,92%);margin:0 auto;padding:34px 0 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:28px}
+.brand{font-size:1.3rem;font-weight:800;letter-spacing:.3px}.brand span{color:#f08aa2}
+.badge{border:1px solid var(--line);border-radius:999px;padding:7px 12px;color:var(--muted);font-size:.82rem}
+.hero{margin-bottom:24px}.eyebrow{color:#f08aa2;text-transform:uppercase;font-size:.76rem;font-weight:800;letter-spacing:2px}
+h1{font-size:clamp(2rem,5vw,3.1rem);line-height:1.08;margin:8px 0 12px;max-width:700px}
+.intro{color:var(--muted);max-width:700px;margin:0}
+.layout{display:grid;grid-template-columns:1.05fr .95fr;gap:20px;align-items:start}
+.card{background:linear-gradient(150deg,rgba(255,255,255,.025),transparent 45%),var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 14px 40px #0002}
+h2{font-size:1.12rem;margin:0 0 18px}h3{font-size:1rem;margin:0 0 10px}
+label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 7px}
+input,select{width:100%;background:#100d12;color:var(--text);border:1px solid #57414e;border-radius:10px;padding:12px;font:inherit;min-width:0}
+input:focus,select:focus{outline:2px solid #b83758;outline-offset:1px}
+.field{margin-bottom:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.method-note{background:#291b24;border-left:3px solid var(--maroon2);border-radius:8px;padding:12px 13px;color:#e5d5dc;font-size:.88rem;margin:4px 0 18px}
+.tenant-head,.tenant-row{display:grid;grid-template-columns:1.1fr .8fr 36px;gap:8px;align-items:center}
+.tenant-head{font-size:.78rem;color:var(--muted);padding-bottom:7px}
+.tenant-row{margin-bottom:9px}
+.tenant-row input{padding:10px 9px}
+.remove{background:#35212a;color:#ffdce4;border:1px solid #6e3347;border-radius:9px;height:42px;cursor:pointer;font-size:1.1rem}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:750}
+.primary{background:linear-gradient(135deg,var(--maroon2),var(--maroon));color:white;flex:1}
+.secondary{background:#30232d;border:1px solid var(--line);color:var(--text)}
+.error{display:none;color:var(--bad);font-size:.9rem;margin:12px 0 0}
+.result-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.metric{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.metric small{display:block;color:var(--muted);margin-bottom:5px}.metric strong{font-size:1.35rem}
+.results-list{display:flex;flex-direction:column;gap:10px}
+.person{background:#171117;border:1px solid #3b2a35;border-radius:12px;padding:13px}
+.person-line{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.person-name{font-weight:750;overflow-wrap:anywhere}.amount{font-weight:850;font-size:1.1rem;color:#ffa0b6;white-space:nowrap}
+.subline{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:.82rem;margin-top:4px}
+.bar{height:6px;background:#35252f;border-radius:99px;margin-top:10px;overflow:hidden}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--maroon),#f08aa2);border-radius:99px}
+.empty{border:1px dashed #59404d;border-radius:12px;padding:22px;text-align:center;color:var(--muted)}
+.total-check{margin-top:14px;padding:12px;border-radius:10px;background:#17251c;color:var(--good);font-size:.9rem}
+.disclaimer{font-size:.82rem;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+footer{margin-top:22px;color:#9d8d97;font-size:.8rem;text-align:center}
+
+.appliance-card{margin-top:20px}
+.section-intro{color:var(--muted);font-size:.9rem;margin:-8px 0 18px}
+.appliance-head,.appliance-row{display:grid;grid-template-columns:1.05fr 1fr .8fr .8fr .8fr 36px;gap:8px;align-items:center}
+.appliance-head{font-size:.76rem;color:var(--muted);padding-bottom:7px}
+.appliance-row{margin-bottom:9px}
+.appliance-row input,.appliance-row select{padding:10px 8px;font-size:.9rem}
+.appliance-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.appliance-total{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.appliance-total small{display:block;color:var(--muted);margin-bottom:5px}
+.appliance-total strong{font-size:1.3rem}
+.tenant-estimates{display:flex;flex-direction:column;gap:8px}
+.tenant-estimate{display:flex;justify-content:space-between;gap:12px;background:#171117;border:1px solid #3b2a35;border-radius:10px;padding:11px 13px}
+.tenant-estimate span:last-child{font-weight:800;color:#ffa0b6;white-space:nowrap}
+.appliance-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.appliance-help{font-size:.82rem;color:var(--muted);margin:12px 0 0}
+@media(max-width:800px){.appliance-head{display:none}.appliance-row{grid-template-columns:1fr 1fr}.appliance-row .remove{grid-column:2;justify-self:end;width:42px}.appliance-row input:first-child{grid-column:1/-1}.appliance-row select{grid-column:1/-1}}
+\n@media(max-width:800px){.layout{grid-template-columns:1fr}.wrap{padding-top:22px}.card{padding:18px}}
+@media(max-width:440px){.row{grid-template-columns:1fr}.tenant-head,.tenant-row{grid-template-columns:1fr .8fr 34px}.badge{display:none}.card{padding:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="brand">Dorm<span>Share</span></div><div class="badge">Electricity allocation prototype</div></header>
+  <section class="hero">
+    <div class="eyebrow">Clearer shared bills</div>
+    <h1>Split the electricity bill with a clear breakdown.</h1>
+    <p class="intro">Enter the monthly bill, choose an allocation method, and see each tenant's estimated share. This prototype calculates locally in your browser and does not save your entries.</p>
+  </section>
+  <main class="layout">
+    <section class="card">
+      <h2>Bill details</h2>
+      <div class="row">
+        <div class="field"><label for="bill">Total electricity bill (₱)</label><input id="bill" type="number" min="0.01" step="0.01" value="2400"></div>
+        <div class="field"><label for="method">Allocation method</label><select id="method"><option value="equal">Equal sharing</option><option value="usage">Consumption-based</option><option value="hybrid">Hybrid allocation</option></select></div>
+      </div>
+      <div id="methodNote" class="method-note">The full bill is divided equally among all tenants. This is simple, but it does not account for different electricity usage.</div>
+      <div id="hybridField" class="field" hidden><label for="sharedPercent">Shared-cost portion (%)</label><input id="sharedPercent" type="number" min="0" max="100" step="1" value="40"><small style="color:var(--muted)">This portion is split equally. The rest is split based on recorded kWh.</small></div>
+      <h3>Tenants and consumption</h3>
+      <div class="tenant-head"><span>Tenant name</span><span>Usage (kWh)</span><span></span></div>
+      <div id="tenants"></div>
+      <div class="actions"><button id="addTenant" class="btn secondary" type="button">+ Add tenant</button><button id="calculate" class="btn primary" type="button">Calculate shares</button></div>
+      <p id="error" class="error" role="alert"></p>
+    </section>
+    <section class="card">
+      <h2>Allocation results</h2>
+      <div class="result-top">
+        <div class="metric"><small>Total bill</small><strong id="outBill">₱2,400.00</strong></div>
+        <div class="metric"><small>Tenants</small><strong id="outCount">4</strong></div>
+      </div>
+      <div id="results" class="results-list" aria-live="polite"></div>
+      <div id="totalCheck" class="total-check">Total allocated: ₱2,400.00</div>
+      <p id="formula" class="disclaimer">Method: equal sharing. Each tenant pays the total bill divided by the number of tenants.</p>
+      <p class="disclaimer">Important: Consumption-based and hybrid calculations assume that the entered kWh readings are reliable and comparable. A real utility bill can include taxes, fixed charges, shared-area usage, and other line items. Agree on the allocation rules with tenants before using this for actual payments.</p>
+    </section>
+  </main>
+
+  <section class="card appliance-card">
+    <h2>Appliance usage tracker</h2>
+    <p class="section-intro">List the appliances each tenant uses. Enter the appliance's rated power from its label or manual, then estimate how many hours per day it runs and how many days per month it is used.</p>
+    <div class="method-note"><strong>How to read the label:</strong> Most appliance labels show power in watts (W), not kWh. Estimated energy use = watts ÷ 1,000 × hours used × days used. For example, a 100 W device used for 5 hours a day over 30 days uses about 15 kWh.</div>
+    <div class="appliance-head"><span>Appliance name/type</span><span>Tenant</span><span>Power (W)</span><span>Hours/day</span><span>Days/month</span><span></span></div>
+    <div id="appliances"></div>
+    <div class="appliance-actions">
+      <button id="addAppliance" class="btn secondary" type="button">+ Add appliance</button>
+      <button id="calculateAppliances" class="btn primary" type="button">Calculate appliance usage</button>
+    </div>
+    <p id="applianceError" class="error" role="alert"></p>
+    <div class="appliance-summary">
+      <div class="appliance-total"><small>Estimated monthly usage</small><strong id="applianceKwh">0.00 kWh</strong></div>
+      <div class="appliance-total"><label for="ratePerKwh">Electricity rate (₱ per kWh)</label><input id="ratePerKwh" type="number" min="0" step="0.01" placeholder="Enter your bill's rate"><small id="estimatedCost" style="display:block;color:var(--muted);margin-top:8px">Estimated cost: enter a rate</small></div>
+    </div>
+    <h3>Estimated usage by tenant</h3>
+    <div id="tenantEstimates" class="tenant-estimates"><div class="empty">Add appliances to see estimated usage.</div></div>
+    <div class="appliance-actions"><button id="useEstimates" class="btn primary" type="button">Use estimates in bill allocation</button></div>
+    <p class="appliance-help">These are estimates, not direct meter readings. Actual consumption can differ because devices do not always draw their maximum rated power. Standby use, usage patterns, and appliance efficiency also affect results. The cost estimate multiplies estimated kWh by the rate you enter.</p>
+  </section>
+
+  <footer>DormShare prototype • No accounts, database, or data transmission</footer>
+</div>
+<script>
+const tenantsEl = document.getElementById('tenants');
+const methodEl = document.getElementById('method');
+const billEl = document.getElementById('bill');
+const errorEl = document.getElementById('error');
+const methodNote = document.getElementById('methodNote');
+const hybridField = document.getElementById('hybridField');
+let nextId = 1;
+
+function addTenant(name = `Tenant ${nextId}`, usage = '') {
+  const row = document.createElement('div');
+  row.className = 'tenant-row';
+  row.dataset.id = nextId++;
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.maxLength = 50; nameInput.placeholder = 'Name'; nameInput.value = name;
+  nameInput.setAttribute('aria-label', 'Tenant name');
+  const usageInput = document.createElement('input');
+  usageInput.type = 'number'; usageInput.min = '0'; usageInput.step = '0.01'; usageInput.placeholder = 'kWh'; usageInput.value = usage;
+  usageInput.setAttribute('aria-label', 'Electricity consumption in kWh');
+  const remove = document.createElement('button');
+  remove.type = 'button'; remove.className = 'remove'; remove.textContent = '×'; remove.title = 'Remove tenant'; remove.setAttribute('aria-label','Remove tenant');
+  remove.addEventListener('click', () => { if (tenantsEl.children.length <= 1) { showError('Add at least one tenant.'); return; } row.remove(); calculate(); if (typeof refreshApplianceTenantOptions === 'function') { refreshApplianceTenantOptions(); calculateAppliances(); } });
+  row.append(nameInput, usageInput, remove);
+  tenantsEl.appendChild(row);
+  updateTenantHead();
+  if (typeof refreshApplianceTenantOptions === 'function') refreshApplianceTenantOptions();
+}
+function updateTenantHead() {
+  document.querySelector('.tenant-head span:nth-child(2)').textContent = methodEl.value === 'equal' ? 'Usage (optional)' : 'Usage (kWh)';
+}
+function showError(msg='') { errorEl.textContent = msg; errorEl.style.display = msg ? 'block' : 'none'; }
+function money(n) { return '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function getTenants() {
+  return [...tenantsEl.querySelectorAll('.tenant-row')].map((row, i) => {
+    const inputs = row.querySelectorAll('input');
+    return { name: inputs[0].value.trim() || `Tenant ${i+1}`, usage: inputs[1].value.trim() === '' ? null : Number(inputs[1].value) };
+  });
+}
+// Allocate integer centavos and assign any rounding remainder to the last tenant.
+function distribute(total, weights) {
+  const cents = Math.round(total * 100);
+  const sum = weights.reduce((a,b)=>a+b,0);
+  if (sum <= 0) return weights.map(()=>0);
+  const exact = weights.map(w => cents * w / sum);
+  const result = exact.map(x => Math.floor(x));
+  let remainder = cents - result.reduce((a,b)=>a+b,0);
+  const order = exact.map((x,i)=>({i,frac:x-Math.floor(x)})).sort((a,b)=>b.frac-a.frac);
+  for (let i=0;i<remainder;i++) result[order[i % order.length].i]++;
+  return result.map(c=>c/100);
+}
+function calculate() {
+  showError();
+  const total = Number(billEl.value);
+  const people = getTenants();
+  const method = methodEl.value;
+  if (!Number.isFinite(total) || total <= 0) return showError('Enter a total bill greater than ₱0.');
+  if (people.length < 1) return showError('Add at least one tenant.');
+  if (people.some(p => p.usage !== null && (!Number.isFinite(p.usage) || p.usage < 0))) return showError('Consumption must be zero or greater.');
+  let weights, descriptions, formulaText;
+  if (method === 'equal') {
+    weights = people.map(()=>1);
+    descriptions = people.map(()=> 'Equal share');
+    formulaText = 'Method: equal sharing. Total bill ÷ number of tenants. This does not reflect differences in electricity use.';
+  } else {
+    if (people.some(p => p.usage === null)) return showError('Enter a kWh reading for every tenant for this method.');
+    const sumUsage = people.reduce((sum,p)=>sum+p.usage,0);
+    if (sumUsage <= 0) return showError('Total kWh must be greater than zero for this method.');
+    if (method === 'usage') {
+      weights = people.map(p=>p.usage);
+      descriptions = people.map(p=>`${p.usage.toLocaleString('en-PH')} kWh`);
+      formulaText = 'Method: consumption-based. Each tenant pays in proportion to their entered kWh: tenant kWh ÷ total kWh × bill.';
+    } else {
+      const sharedPct = Number(document.getElementById('sharedPercent').value);
+      if (!Number.isFinite(sharedPct) || sharedPct < 0 || sharedPct > 100) return showError('Shared-cost portion must be between 0% and 100%.');
+      const sharedTotal = total * sharedPct / 100;
+      const usageTotal = total - sharedTotal;
+      const sharedParts = distribute(sharedTotal, people.map(()=>1));
+      const usageParts = distribute(usageTotal, people.map(p=>p.usage));
+      const shares = people.map((p,i)=>Math.round((sharedParts[i]+usageParts[i])*100)/100);
+      renderResults(people, shares, descriptions = people.map((p,i)=>`${p.usage.toLocaleString('en-PH')} kWh • ${sharedPct}% shared portion`), total);
+      document.getElementById('formula').textContent = `Method: hybrid. ${sharedPct}% of the bill is split equally; the remaining ${100-sharedPct}% is split by kWh usage.`;
+      return;
+    }
+  }
+  const shares = distribute(total, weights);
+  renderResults(people, shares, descriptions, total);
+  document.getElementById('formula').textContent = formulaText;
+}
+function renderResults(people, shares, descriptions, total) {
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+  people.forEach((person,i) => {
+    const card = document.createElement('div'); card.className = 'person';
+    const line = document.createElement('div'); line.className = 'person-line';
+    const name = document.createElement('span'); name.className = 'person-name'; name.textContent = person.name;
+    const amount = document.createElement('span'); amount.className = 'amount'; amount.textContent = money(shares[i]);
+    line.append(name, amount);
+    const sub = document.createElement('div'); sub.className = 'subline';
+    const desc = document.createElement('span'); desc.textContent = descriptions[i];
+    const pct = document.createElement('span'); pct.textContent = total ? `${(shares[i]/total*100).toFixed(1)}% of bill` : '0%';
+    sub.append(desc,pct);
+    const bar = document.createElement('div'); bar.className='bar'; const fill=document.createElement('span'); fill.style.width=`${Math.min(100, total ? shares[i]/total*100 : 0)}%`; bar.append(fill);
+    card.append(line,sub,bar); results.append(card);
+  });
+  document.getElementById('outBill').textContent = money(total);
+  document.getElementById('outCount').textContent = String(people.length);
+  const sum = Math.round(shares.reduce((a,b)=>a+b,0)*100)/100;
+  document.getElementById('totalCheck').textContent = `Total allocated: ${money(sum)}${Math.abs(sum-total)<0.011 ? ' ✓ Matches bill total' : ' • Check inputs'}`;
+}
+
+// Appliance tracker: monthly energy estimate = watts / 1000 × hours/day × days/month.
+const appliancesEl = document.getElementById('appliances');
+const applianceErrorEl = document.getElementById('applianceError');
+let nextApplianceId = 1;
+function currentTenantRows() {
+  return [...tenantsEl.querySelectorAll('.tenant-row')].map((row, i) => ({
+    id: row.dataset.id,
+    name: row.querySelectorAll('input')[0].value.trim() || `Tenant ${i+1}`,
+    row
+  }));
+}
+function refreshApplianceTenantOptions() {
+  const tenants = currentTenantRows();
+  [...appliancesEl.querySelectorAll('.appliance-row')].forEach(row => {
+    const select = row.querySelector('select');
+    const previous = select.value;
+    select.innerHTML = '';
+    tenants.forEach((tenant, i) => {
+      const option = document.createElement('option');
+      option.value = tenant.id; option.textContent = tenant.name;
+      select.appendChild(option);
+    });
+    if (tenants.some(t => t.id === previous)) select.value = previous;
+  });
+}
+function addAppliance(name = '', watts = '', hours = '', days = '30', tenantId = null) {
+  const row = document.createElement('div');
+  row.className = 'appliance-row';
+  row.dataset.applianceId = nextApplianceId++;
+  const nameInput = document.createElement('input');
+  nameInput.type='text'; nameInput.maxLength=70; nameInput.placeholder='e.g. Desktop computer'; nameInput.value=name;
+  nameInput.setAttribute('aria-label','Appliance name or type');
+  const tenantSelect = document.createElement('select');
+  tenantSelect.setAttribute('aria-label','Tenant who uses this appliance');
+  const wattsInput = document.createElement('input');
+  wattsInput.type='number'; wattsInput.min='0.01'; wattsInput.step='0.01'; wattsInput.placeholder='e.g. 300'; wattsInput.value=watts;
+  wattsInput.setAttribute('aria-label','Rated power in watts');
+  const hoursInput = document.createElement('input');
+  hoursInput.type='number'; hoursInput.min='0'; hoursInput.max='24'; hoursInput.step='0.25'; hoursInput.placeholder='0–24'; hoursInput.value=hours;
+  hoursInput.setAttribute('aria-label','Hours used per day');
+  const daysInput = document.createElement('input');
+  daysInput.type='number'; daysInput.min='0'; daysInput.max='31'; daysInput.step='1'; daysInput.placeholder='0–31'; daysInput.value=days;
+  daysInput.setAttribute('aria-label','Days used per month');
+  const remove = document.createElement('button');
+  remove.type='button'; remove.className='remove'; remove.textContent='×'; remove.title='Remove appliance'; remove.setAttribute('aria-label','Remove appliance');
+  remove.addEventListener('click',()=>{row.remove(); calculateAppliances();});
+  row.append(nameInput,tenantSelect,wattsInput,hoursInput,daysInput,remove);
+  appliancesEl.appendChild(row);
+  refreshApplianceTenantOptions();
+  if (tenantId && [...tenantSelect.options].some(o=>o.value===tenantId)) tenantSelect.value=tenantId;
+}
+function showApplianceError(msg='') {
+  applianceErrorEl.textContent=msg;
+  applianceErrorEl.style.display=msg?'block':'none';
+}
+function applianceData() {
+  return [...appliancesEl.querySelectorAll('.appliance-row')].map(row=>{
+    const inputs=row.querySelectorAll('input');
+    return {row,name:inputs[0].value.trim()||'Unnamed appliance',tenantId:row.querySelector('select').value,
+      watts:inputs[1].value.trim()===''?null:Number(inputs[1].value),
+      hours:inputs[2].value.trim()===''?null:Number(inputs[2].value),
+      days:inputs[3].value.trim()===''?null:Number(inputs[3].value)};
+  });
+}
+function calculateAppliances() {
+  showApplianceError();
+  refreshApplianceTenantOptions();
+  const data=applianceData();
+  for (const a of data) {
+    if (a.watts===null || a.hours===null || a.days===null) {
+      if (a.watts===null && a.hours===null && a.days===null && !a.row.querySelector('input').value.trim()) continue;
+      return showApplianceError('Complete the power, hours per day, and days per month fields for each appliance, or remove the empty row.');
+    }
+    if (![a.watts,a.hours,a.days].every(Number.isFinite) || a.watts<=0 || a.hours<0 || a.hours>24 || a.days<0 || a.days>31) {
+      return showApplianceError('Use power greater than 0 W, hours from 0 to 24 per day, and days from 0 to 31 per month.');
+    }
+  }
+  const tenants=currentTenantRows();
+  const totals={}; tenants.forEach(t=>totals[t.id]=0);
+  let totalKwh=0;
+  data.forEach(a=>{
+    if (a.watts===null) return;
+    const kwh=(a.watts/1000)*a.hours*a.days;
+    a.kwh=kwh; totalKwh+=kwh;
+    if (Object.prototype.hasOwnProperty.call(totals,a.tenantId)) totals[a.tenantId]+=kwh;
+  });
+  document.getElementById('applianceKwh').textContent=`${totalKwh.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})} kWh`;
+  const rateText=document.getElementById('ratePerKwh').value.trim();
+  const rate=rateText===''?null:Number(rateText);
+  if (rate!==null && (!Number.isFinite(rate)||rate<0)) return showApplianceError('Electricity rate must be zero or greater.');
+  document.getElementById('estimatedCost').textContent=rate===null?'Estimated cost: enter a rate':`Estimated monthly cost: ${money(totalKwh*rate)}`;
+  const summary=document.getElementById('tenantEstimates');
+  summary.innerHTML='';
+  tenants.forEach(t=>{
+    const line=document.createElement('div'); line.className='tenant-estimate';
+    const name=document.createElement('span'); name.textContent=t.name;
+    const usage=document.createElement('span'); usage.textContent=`${totals[t.id].toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})} kWh/month`;
+    line.append(name,usage); summary.append(line);
+  });
+  if (!tenants.length) summary.innerHTML='<div class="empty">Add at least one tenant in Bill details first.</div>';
+}
+function applyApplianceEstimates() {
+  calculateAppliances();
+  if (applianceErrorEl.textContent) return;
+  const tenants=currentTenantRows();
+  const totals={}; tenants.forEach(t=>totals[t.id]=0);
+  for (const a of applianceData()) {
+    if (a.watts===null || a.hours===null || a.days===null) continue;
+    const kwh=(a.watts/1000)*a.hours*a.days;
+    if (Object.prototype.hasOwnProperty.call(totals,a.tenantId)) totals[a.tenantId]+=kwh;
+  }
+  tenants.forEach(t=>{
+    const usageInput=t.row.querySelectorAll('input')[1];
+    usageInput.value=totals[t.id].toFixed(2);
+  });
+  // Switch to consumption-based so the estimates can be used in the allocation calculation.
+  methodEl.value='usage';
+  methodEl.dispatchEvent(new Event('change'));
+  calculate();
+  document.getElementById('methodNote').textContent='Using estimated appliance kWh per tenant. These are estimates, not actual meter readings.';
+  document.getElementById('formula').textContent='Method: consumption-based using estimated appliance usage. Each tenant’s share is proportional to the kWh estimated from their listed appliances.';
+}
+
+methodEl.addEventListener('change', () => {
+  const method = methodEl.value;
+  hybridField.hidden = method !== 'hybrid';
+  methodNote.textContent = method === 'equal'
+    ? 'The full bill is divided equally among all tenants. This is simple, but it does not account for different electricity usage.'
+    : method === 'usage'
+      ? 'The full bill is divided according to each tenant’s entered kWh. Use this only if reliable individual consumption readings are available.'
+      : 'A chosen percentage is divided equally as shared costs. The rest is divided according to each tenant’s entered kWh.';
+  updateTenantHead(); calculate();
+});
+document.getElementById('addTenant').addEventListener('click', () => { addTenant(); calculate(); });
+document.getElementById('calculate').addEventListener('click', calculate);
+billEl.addEventListener('input', calculate);
+document.getElementById('sharedPercent').addEventListener('input', calculate);
+tenantsEl.addEventListener('input', () => { calculate(); refreshApplianceTenantOptions(); calculateAppliances(); });
+document.getElementById('addAppliance').addEventListener('click', () => { addAppliance(); calculateAppliances(); });
+document.getElementById('calculateAppliances').addEventListener('click', calculateAppliances);
+document.getElementById('useEstimates').addEventListener('click', applyApplianceEstimates);
+document.getElementById('ratePerKwh').addEventListener('input', calculateAppliances);
+appliancesEl.addEventListener('input', calculateAppliances);
+appliancesEl.addEventListener('change', calculateAppliances);
+addTenant('Tenant 1', '80'); addTenant('Tenant 2', '120'); addTenant('Tenant 3', '60'); addTenant('Tenant 4', '140');
+addAppliance('Desktop computer', '300', '5', '30');
+addAppliance('Electric fan', '60', '8', '30');
+calculate();
+calculateAppliances();
+</script>
+</body>
+</html>
